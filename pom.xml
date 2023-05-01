@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.korpora.aeet</groupId>
+    <artifactId>indexformatter</artifactId>
+    <version>0.1-SNAPSHOT</version>
+
+<properties>
+        <!-- project settings -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- plug-in settings -->
+        <maven.compiler.source>20</maven.compiler.source>
+        <maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
+        <jackson.version>2.15.0</jackson.version>
+        <dependency.locations.enabled>false</dependency.locations.enabled>
+        <junit.subversion>9.2</junit.subversion>
+        <junit.version>5.${junit.subversion}</junit.version>
+        <junit.aux.version>1.${junit.subversion}</junit.aux.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <oxygen.sdk.version>25.1.0.0</oxygen.sdk.version>
+        <javac.path>${env.JAVA_HOME}/bin/javac</javac.path>
+    </properties>
+    <repositories>
+        <repository>
+            <id>oxygenxml</id>
+            <name>oXygen XML SDK Maven Repository</name>
+            <url>https://oxygenxml.com/maven/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/net.sf.saxon/Saxon-HE -->
+        <dependency>
+            <groupId>net.sf.saxon</groupId>
+            <artifactId>Saxon-HE</artifactId>
+            <version>12.1</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/xerces/xercesImpl -->
+        <!--dependency>
+            <groupId>xerces</groupId>
+            <artifactId>xercesImpl</artifactId>
+            <version>2.12.2</version>
+        </dependency-->
+        <!--dependency>
+            <groupId>com.oxygenxml</groupId>
+            <artifactId>oxygen-sdk</artifactId>
+            <version>${oxygen.sdk.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.oxygenxml</groupId>
+            <artifactId>web-author-frameworks</artifactId>
+            <version>${oxygen.sdk.version}</version>
+            <type>zip</type>
+            <scope>provided</scope>
+        </dependency-->
+        <!-- https://mvnrepository.com/artifact/jakarta.servlet/jakarta.servlet-api -->
+        <!--dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>6.0.0</version>
+            <scope>provided</scope>
+        </dependency-->
+        <dependency>
+            <groupId>org.korpora.useful</groupId>
+            <artifactId>utilities</artifactId>
+            <version>0.8.0</version>
+        </dependency>
+        <!--dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.4.7</version>
+        </dependency-->
+
+        <!-- https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api -->
+        <!--dependency>
+          <groupId>javax.servlet</groupId>
+          <artifactId>javax.servlet-api</artifactId>
+          <version>4.0.1</version>
+          <scope>provided</scope>
+        </dependency-->
+        <!-- https://mvnrepository.com/artifact/org.annolab.tt4j/org.annolab.tt4j -->
+        <!-- https://mvnrepository.com/artifact/org.jooq/jool -->
+        <!--dependency>
+          <groupId>org.jooq</groupId>
+          <artifactId>jool</artifactId>
+          <version>0.9.14</version>
+        </dependency-->
+        <!--dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency-->
+        <!-- https://mvnrepository.com/artifact/info.picocli/picocli -->
+        <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+            <version>4.7.1</version>
+        </dependency>
+        </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/xml</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/xsl</directory>
+                <includes>
+                    <include>**/*.xsl</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/xquery</directory>
+                <includes>
+                    <include>**/*.xq</include>
+                    <include>**/*.xql</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*.xsl</include>
+                    <include>**/*.xml</include>
+                    <include>**/*.bin</include>
+                    <include>**/*.xsl</include>
+                    <include>**/*.txt</include>
+                    <include>**/*.tsv</include>
+                    <include>**/*.json</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources/properties</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <!-- or whatever version you use -->
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <release>${maven.compiler.target}</release>
+                    <showDeprecation>true</showDeprecation>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>javadoc-no-fork</goal>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <failOnError>false</failOnError>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <archive>
+                        <index>true</index>
+                        <manifestEntries>
+                            <Automatic-Module-Name>ediarum.jar</Automatic-Module-Name>
+                        </manifestEntries>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>dependency/</classpathPrefix>
+                            <mainClass>org.korpora.aeet.ediarum.IndexFormatter</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+            </plugin>
+
+        </plugins>
+    </build>
+    <organization>
+        <name>Korpora.org</name>
+        <url>http://www.korpora.org</url>
+    </organization>
+</project>
