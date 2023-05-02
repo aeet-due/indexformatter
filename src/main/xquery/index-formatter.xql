@@ -11,7 +11,7 @@ declare function aeet:copy-original($node) {
     }
 };
 
-(** strip unnecessary namespace nodes, see https://stackoverflow.com/questions/23002655/xquery-how-to-remove-unused-namespace-in-xml-node **)
+(:** strip unnecessary namespace nodes, see https://stackoverflow.com/questions/23002655/xquery-how-to-remove-unused-namespace-in-xml-node **:)
 declare function aeet:strip-unnecessary-namespaces($n as node()) as node() {
     if($n instance of element()) then (
         element { node-name($n) } {
