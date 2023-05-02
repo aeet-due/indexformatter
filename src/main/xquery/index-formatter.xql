@@ -26,7 +26,7 @@ declare function aeet:strip-unnecessary-namespaces($n as node()) as node() {
     )
 };
 
-(: from Ediarum's config.xqm :)
+(: from Ediarum's config.xqm, slightly tweaked :)
 declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-id, $show-details, $order) {
     switch($ediarum-index-id)
     case "persons" return (

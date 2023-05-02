@@ -1,9 +1,6 @@
 /**
- * 
- */
-/**
- * @author bfi
- *
+ * just the modules…
+ * @author Bernhard Fisseni &lt;bernhard.fisseni@uni-due.de&gt;
  */
 module indexformatter {
 	exports org.korpora.aeet.ediarum;

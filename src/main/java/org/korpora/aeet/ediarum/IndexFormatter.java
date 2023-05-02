@@ -13,7 +13,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import picocli.CommandLine;
@@ -21,12 +20,18 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
 
-@Command(mixinStandardHelpOptions = true, description = "format index for Ediarum in Oxygen", versionProvider = VersionProvider.class)
+/**
+ * format  (Ediarum.REGISTER and) TEI-conformant indices to Ediarum.JAR-compatible simple lists.
+ *
+ * @author Bernhard Fisseni &lt;bernhard.fisseni@uni-due.de&gt;
+ */
+@Command(mixinStandardHelpOptions = true, description = "format index for Ediarum in Oxygen",
+        versionProvider = VersionProvider.class)
 public class IndexFormatter implements Callable<Integer> {
 
 
     /**
-     * kinds of indices supported, names are in sync with index-formatter.xql
+     * kinds of indices supported, names are in sync with {@code index-formatter.xql}
      */
     public enum IndexType {
         persons,
@@ -36,9 +41,11 @@ public class IndexFormatter implements Callable<Integer> {
         bibliography,
     }
 
+    @SuppressWarnings("unused")
     @Parameters(index = "0", description = "input file")
     private Path inputFile;
 
+    @SuppressWarnings("unused")
     @Parameters(index = "1", paramLabel = "Type", description = "Index Type,"
             + " one of: ${COMPLETION-CANDIDATES}")
 
@@ -58,9 +65,11 @@ public class IndexFormatter implements Callable<Integer> {
 
     /**
      * format index; pass arguments as String. Validation by recasting.
+     *
      * @param indexTypeString the index type, refer to {@link IndexType}.
-     * @param inputFile the index file
+     * @param inputFile       the index file
      */
+    @SuppressWarnings("unused")
     private static void format(String indexTypeString, String inputFile) {
         var indexTypeEnum = IndexType.valueOf(indexTypeString);
         var inputFilePath = Path.of(inputFile);
@@ -69,41 +78,43 @@ public class IndexFormatter implements Callable<Integer> {
 
     /**
      * format index to XML
-     * @param indexType the index type, refer to {@link IndexType}.
+     *
+     * @param indexType     the index type, refer to {@link IndexType}.
      * @param inputFilePath the index file
      */
+    @SuppressWarnings("unused")
     private static void format(IndexType indexType, Path inputFilePath) {
         format(indexType, inputFilePath.toFile());
     }
 
     /**
      * format index to XML
+     *
      * @param indexType the index type, refer to {@link IndexType}.
      * @param inputFile the index file
      */
     private static void format(IndexType indexType, File inputFile) {
-        try (InputStream formatXQL = IndexFormatter.class.getClassLoader().getResourceAsStream("index-formatter.xql"); InputStream indexStream = new FileInputStream(inputFile)) {
+        try (InputStream formatXQL = IndexFormatter.class.getClassLoader().getResourceAsStream("index-formatter.xql");
+             InputStream indexStream = new FileInputStream(inputFile)) {
             String indexTypeString = indexType.toString();
             Processor proc = new Processor(false);
             XQueryCompiler comp = proc.newXQueryCompiler();
-            XQueryExecutable exp = comp.compile(formatXQL);
+            XQueryExecutable xQueryEvaluator = comp.compile(formatXQL);
 
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
             docFactory.setNamespaceAware(true);
             Document document = docFactory.newDocumentBuilder().newDocument();
 
             SAXSource indexSource = new SAXSource(new InputSource(indexStream));
-            XQueryEvaluator qe = exp.load();
-            qe.setExternalVariable(new QName("ediarum-index-id"), new XdmAtomicValue(indexTypeString));
-            qe.setExternalVariable(new QName("entries"), proc.newDocumentBuilder().wrap(indexSource));
-            qe.run(new DOMDestination(document));
+            XQueryEvaluator queryEvaluator = xQueryEvaluator.load();
+            queryEvaluator.setExternalVariable(new QName("ediarum-index-id"), new XdmAtomicValue(indexTypeString));
+            queryEvaluator.setExternalVariable(new QName("entries"), proc.newDocumentBuilder().wrap(indexSource));
+            queryEvaluator.run(new DOMDestination(document));
 
             System.err.println(XMLUtilities.documentToString(document, true, false));
 
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (SaxonApiException | ParserConfigurationException e) {
+        } catch (IOException | SaxonApiException | ParserConfigurationException e) {
             throw new RuntimeException(e);
         }
     }
