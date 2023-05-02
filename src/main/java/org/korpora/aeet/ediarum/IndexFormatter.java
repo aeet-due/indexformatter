@@ -88,7 +88,7 @@ public class IndexFormatter implements Callable<Integer> {
     }
 
     /**
-     * format index to XML
+     * format index of specific entries to simple XML list with items
      *
      * @param indexType the index type, refer to {@link IndexType}.
      * @param inputFile the index file
