@@ -11,6 +11,20 @@ declare function aeet:copy-original($node) {
     }
 };
 
+(** strip unnecessary namespace nodes, see https://stackoverflow.com/questions/23002655/xquery-how-to-remove-unused-namespace-in-xml-node **)
+declare function aeet:strip-unnecessary-namespaces($n as node()) as node() {
+    if($n instance of element()) then (
+        element { node-name($n) } {
+            $n/@*,
+            $n/node()/aeet:strip-unnecessary-namespaces(.)
+        }
+    ) else if($n instance of document-node()) then (
+        document { aeet:strip-unnecessary-namespaces($n/node()) }
+    ) else (
+        $n
+    )
+};
+
 declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-id, $show-details, $order) {
     switch($ediarum-index-id)
     case "persons" return (
@@ -213,4 +227,4 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
 };
 let $show-details := true()
 let $order := true()
-return aeet:get-ediarum-index-without-params($entries, $ediarum-index-id, $show-details, $order)
+return aeet:strip-unnecessary-namespaces(aeet:get-ediarum-index-without-params($entries, $ediarum-index-id, $show-details, $order))
