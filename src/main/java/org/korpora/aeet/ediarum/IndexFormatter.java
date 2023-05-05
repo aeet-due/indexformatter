@@ -111,7 +111,7 @@ public class IndexFormatter implements Callable<Integer> {
             queryEvaluator.setExternalVariable(new QName("entries"), proc.newDocumentBuilder().wrap(indexSource));
             queryEvaluator.run(new DOMDestination(document));
 
-            System.err.println(XMLUtilities.documentToString(document, true, false));
+            System.out.println(XMLUtilities.documentToString(document, true, false));
 
 
         } catch (IOException | SaxonApiException | ParserConfigurationException e) {

@@ -7,9 +7,9 @@ declare variable $ediarum-index-id external;
 
 (: copy element and wrap in <original> :)
 declare function aeet:copy-original($node) {
-    element original {
-        aeet:strip-unnecessary-namespaces(copy-of($node))
-    }
+    aeet:strip-unnecessary-namespaces(<tei:original>
+        {copy-of($node)}
+    </tei:original>)
 };
 
 (: strip unnecessary namespace nodes, see https://stackoverflow.com/questions/23002655/xquery-how-to-remove-unused-namespace-in-xml-node :)
@@ -26,6 +26,12 @@ declare function aeet:strip-unnecessary-namespaces($n as node()) as node() {
     )
 };
 
+declare function aeet:format-surname($name){
+    let $surname := string-join($name/tei:surname[not(@type) or @type != 'birth'], " "),
+        $birthSurname := string-join($name/tei:surname[@type = 'birth'], " ")
+    return normalize-space(string-join(($surname, if ($birthSurname) then concat("geb. ", $birthSurname) else ()), " "))
+};
+
 (: from Ediarum's config.xqm, slightly tweaked :)
 declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-id, $show-details, $order) {
     switch($ediarum-index-id)
@@ -34,20 +40,24 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
             element ul {
                 for $x in $entries//tei:person
                 let $name :=
-                    if ($x/tei:persName[@type='reg'][1]/tei:forename)
-                    then (concat(normalize-space(string-join($x/tei:persName[@type='reg'][1]/tei:surname/text())), ', ', normalize-space(string-join($x/tei:persName[@type='reg'][1]/tei:forename//text()))))
-                    else (normalize-space(string-join($x/tei:persName[@type='reg'][1]/tei:name[1]/text())))
-                let $lifedate :=
+                    if ($x/tei:persName[@type='reg'][1])
+                    then (concat(aeet:format-surname($x/tei:persName[@type='reg'][1]), ', ', normalize-space(string-join($x/tei:persName[@type='reg'][1]/tei:forename, ' '))))
+                    else (normalize-space(string-join($x/tei:persName[@type='reg'][1]/tei:name[1]))),
+                    $orderName :=replace($name, "v(\.|[ao][mn])(\sd(e[rmn]|\.))?\s+|d[ue](l(l[oa])?)?('|\s)+", ""),
+                    $lifedate :=
                     if ($x/tei:floruit)
-                    then (concat(' (', $x/tei:floruit, ')'))
+                    then (concat(' (', $x/tei:floruit, ')
+                    '))
                     else if ($x/tei:birth)
-                        then (concat(' (', $x/tei:birth[1], '-', $x/tei:death[1], ')'))
-                        else ()
-                let $note :=
+                        then (concat(' (', $x/tei:birth[1], '–', $x/tei:death[1], ')'))
+                        else (),
+                    $note :=
+                    (if ($x/tei:name[@type='alias']) then concat("[auch: ", string-join($x/name[@type='alias']) , "]") else (),
+                    if ($x/tei:name[@type='occursAs']) then concat("[oder: ", string-join($x/name[@type='occursAs']) , "]") else (),
                     if ($x/tei:note//text() and $show-details='note')
-                    then (concat(' (', normalize-space(string-join($x/tei:note//text())), ')'))
-                    else ()
-                order by if ($order) then $name else ()
+                    then (concat(' (', normalize-space(string-join($x/tei:note/)), ')'))
+                    else ())
+                order by if ($order) then $orderName else ()
                 return
                     try {
                         element li {
@@ -227,6 +237,6 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
     default return
         ()
 };
-let $show-details := true()
+let $show-details := ('note', 'altname')
 let $order := true()
 return aeet:get-ediarum-index-without-params($entries, $ediarum-index-id, $show-details, $order)
