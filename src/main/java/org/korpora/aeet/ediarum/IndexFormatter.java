@@ -39,6 +39,7 @@ public class IndexFormatter implements Callable<Integer> {
         items,
         organisations,
         bibliography,
+        guess
     }
 
     @SuppressWarnings("unused")
@@ -47,7 +48,7 @@ public class IndexFormatter implements Callable<Integer> {
 
     @SuppressWarnings("unused")
     @Parameters(index = "1", paramLabel = "Type", description = "Index Type,"
-            + " one of: ${COMPLETION-CANDIDATES}")
+            + " one of: ${COMPLETION-CANDIDATES} [default: ${DEFAULT-VALUE}]", defaultValue = "guess")
 
     private IndexType indexTypeEnum;
 
@@ -107,7 +108,7 @@ public class IndexFormatter implements Callable<Integer> {
 
             SAXSource indexSource = new SAXSource(new InputSource(indexStream));
             XQueryEvaluator queryEvaluator = xQueryEvaluator.load();
-            queryEvaluator.setExternalVariable(new QName("ediarum-index-id"), new XdmAtomicValue(indexTypeString));
+            queryEvaluator.setExternalVariable(new QName("ediarum-index-id-external"), new XdmAtomicValue(indexTypeString));
             queryEvaluator.setExternalVariable(new QName("entries"), proc.newDocumentBuilder().wrap(indexSource));
             queryEvaluator.run(new DOMDestination(document));
 
