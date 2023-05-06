@@ -1,5 +1,5 @@
 declare namespace aeet = "http://aeet.korpora.org";
-declare default element namespace "http://www.tei-c.org/ns/1.0";
+(: declare default element namespace "http://www.tei-c.org/ns/1.0"; :)
 declare namespace tei = "http://www.tei-c.org/ns/1.0";
 declare namespace telota = "http://www.telota.de";
 declare variable $entries external;
@@ -38,7 +38,8 @@ declare function aeet:determine-type($entries) {
 declare function aeet:format-surname($name){
     let $surname := string-join($name/tei:surname[not(@type) or @type != 'birth'], " "),
         $birthSurname := string-join($name/tei:surname[@type = 'birth'], " ")
-    return normalize-space(string-join(($surname, if ($birthSurname) then concat("geb. ", $birthSurname) else ()), " "))
+    return normalize-space(string-join(
+    ($surname, if ($birthSurname) then "geb. " || $birthSurname else ()), " "))
 };
 
 declare function aeet:parenthesize($sequence){
@@ -56,22 +57,29 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
                 for $x in $entries//tei:person
                 let $name :=
                     if ($x/tei:persName[@type='reg'][1])
-                    then (concat(aeet:format-surname($x/tei:persName[@type='reg'][1]), ', ', normalize-space(string-join($x/tei:persName[@type='reg'][1]/tei:forename, ' '))))
+                    then
+                        let $surname := aeet:format-surname($x/tei:persName[@type='reg'][1]),
+                            $forename := normalize-space(string-join($x/tei:persName[@type='reg'][1]/tei:forename, " ")),
+                            $effectiveForename := if ($forename = '' ) then  "(OHNE VORNAME)" else $forename,
+                            $effectiveSurname := if ($surname = '' ) then "(OHNE NACHNAME)" else $surname
+                        return normalize-space(string-join((
+                            $effectiveSurname,
+                            $effectiveForename),  ', '))
                     else (normalize-space(string-join($x/tei:persName[@type='reg'][1]/tei:name[1]))),
                     $orderName :=replace($name, "v(\.|[ao][mn])(\sd(e[rmn]|\.))?\s+|d[ue](l(l[oa])?)?('|\s)+", ""),
-                    $lifedate :=
-                    if ($x/tei:floruit)
-                    then (concat(' (', $x/tei:floruit, ')
-                    '))
-                    else if ($x/tei:birth)
-                        then (concat(' (', $x/tei:birth[1], '–', $x/tei:death[1], ')'))
-                        else (),
-                    $note :=
-                    (if ($x/tei:name[@type='alias']) then concat("[auch: ", string-join($x/name[@type='alias']) , "]") else (),
-                    if ($x/tei:name[@type='occursAs']) then concat("[oder: ", string-join($x/name[@type='occursAs']) , "]") else (),
-                    if ($x/tei:note//text() and $show-details='note')
-                    then (concat(' (', normalize-space(string-join($x/tei:note)), ')'))
-                    else ())
+                    $lifedate := if ($x/tei:floruit)
+                        then (concat(' (', $x/tei:floruit, ')
+                        '))
+                        else if ($x/tei:birth)
+                            then (concat(' (', $x/tei:birth[1], '–', $x/tei:death[1], ')'))
+                            else (),
+                        $note := (
+                            if ($x/tei:name[@type='alias']) then concat("[auch: ", string-join($x/name[@type='alias']) , "]") else (),
+                            if ($x/tei:name[@type='occursAs']) then concat("[oder: ", string-join($x/name[@type='occursAs']) , "]") else (),
+                            if ($x/tei:note//text() and $show-details='note')
+                                then (concat(' (', normalize-space(string-join($x/tei:note)), ')'))
+                                else ()
+                        )
                 order by if ($order) then $orderName else ()
                 return
                     try {
@@ -111,9 +119,9 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
                     else (),
                     $note :=
                     if ($place/tei:note and $show-details='note')
-                    then normalize-space(string-join($place/tei:note[1]//text()))
+                    then normalize-space($place/tei:note[1])
                     else (),
-                    $additionalInfo := normalize-space(string-join(($place/tei:region[@type="county"], $place/tei:region[@type="state"], $place/tei:country), " "))
+                    $additionalInfo := normalize-space(string-join(($place/tei:region[@type="county"], $place/tei:region[@type="state"], $place/tei:country), ", "))
 
                 order by if ($order) then $name[1] else ()
                 return
@@ -121,7 +129,7 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
                         element li {
                             attribute xml:id { $place/@xml:id},
                             element span {
-                                string-join(($name, $altname, $note, $additionalInfo))
+                                string-join(($name, $altname, aeet:parenthesize(($note, $additionalInfo))), " ")
                             },
                             aeet:copy-original($place)
                         }
