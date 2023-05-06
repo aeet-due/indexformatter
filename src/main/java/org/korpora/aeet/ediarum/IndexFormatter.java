@@ -108,7 +108,7 @@ public class IndexFormatter implements Callable<Integer> {
 
             SAXSource indexSource = new SAXSource(new InputSource(indexStream));
             XQueryEvaluator queryEvaluator = xQueryEvaluator.load();
-            queryEvaluator.setExternalVariable(new QName("ediarum-index-id-external"), new XdmAtomicValue(indexTypeString));
+            queryEvaluator.setExternalVariable(new QName("ediarum-index-id-override"), new XdmAtomicValue(indexTypeString));
             queryEvaluator.setExternalVariable(new QName("entries"), proc.newDocumentBuilder().wrap(indexSource));
             queryEvaluator.run(new DOMDestination(document));
 

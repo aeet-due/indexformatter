@@ -3,7 +3,7 @@ declare namespace aeet = "http://aeet.korpora.org";
 declare namespace tei = "http://www.tei-c.org/ns/1.0";
 declare namespace telota = "http://www.telota.de";
 declare variable $entries external;
-declare variable $ediarum-index-id-external external;
+declare variable $ediarum-index-id-override external;
 
 (: copy element and wrap in <original> :)
 declare function aeet:copy-original($node) {
@@ -264,5 +264,5 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
 };
 let $show-details := ('note', 'altname')
 let $order := true()
-let $ediarum-index-id := if ($ediarum-index-id-external = "guess") then aeet:determine-type($entries) else $ediarum-index-id-external
+let $ediarum-index-id := if ($ediarum-index-id-override = "guess") then aeet:determine-type($entries) else $ediarum-index-id-override
 return aeet:get-ediarum-index-without-params($entries, $ediarum-index-id, $show-details, $order)
