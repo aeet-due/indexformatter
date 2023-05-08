@@ -8,10 +8,7 @@ import org.xml.sax.InputSource;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.sax.SAXSource;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
@@ -49,22 +46,30 @@ public class IndexFormatter implements Callable<Integer> {
 
 
     @SuppressWarnings("unused")
-    @Parameters(index = "1", paramLabel = "Type", description = "Index Type,"
-            + " one of: ${COMPLETION-CANDIDATES} [default: ${DEFAULT-VALUE}]", defaultValue = "guess")
+    @Parameters(index = "1", paramLabel = "Type",
+            description = "Index Type," + " one of: ${COMPLETION-CANDIDATES} [default: ${DEFAULT-VALUE}]",
+            defaultValue = "guess")
     private IndexType indexTypeEnum;
 
     @Option(names = {"-C", "--copy-original"})
     private boolean copyOriginal;
 
+    @Option(names = {"-o", "--outfile"})
+    Path outFile;
+
     public static void main(String[] args) {
-        int exitCode = new CommandLine(new IndexFormatter())
-                .execute(args);
+        int exitCode = new CommandLine(new IndexFormatter()).execute(args);
         System.exit(exitCode);
     }
 
     public Integer call() {
         System.err.format("Going to format '%s' [type '%s']\n", inputFile, indexTypeEnum.toString());
-        format(indexTypeEnum, inputFile.toFile(), copyOriginal);
+        try {
+            OutputStream outPut = (outFile == null) ? System.out : new FileOutputStream(outFile.toFile());
+            outPut.write(format(indexTypeEnum, inputFile.toFile(), copyOriginal).getBytes());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         return 0;
     }
 
@@ -74,12 +79,13 @@ public class IndexFormatter implements Callable<Integer> {
      * @param indexTypeString the index type, refer to {@link IndexType}.
      * @param inputFile       the index file
      * @param copyOriginal    whether to copy the original node
+     * @return
      */
     @SuppressWarnings("unused")
-    private static void format(String indexTypeString, String inputFile, boolean copyOriginal) {
+    private static Document formatDocument(String indexTypeString, String inputFile, boolean copyOriginal) {
         var indexTypeEnum = IndexType.valueOf(indexTypeString);
         var inputFilePath = Path.of(inputFile);
-        format(indexTypeEnum, inputFilePath.toFile(), copyOriginal);
+        return formatDocument(indexTypeEnum, inputFilePath.toFile(), copyOriginal);
     }
 
     /**
@@ -87,26 +93,69 @@ public class IndexFormatter implements Callable<Integer> {
      *
      * @param indexType     the index type, refer to {@link IndexType}.
      * @param inputFilePath the index file
+     * @return
      */
     @SuppressWarnings("unused")
-    private static void format(IndexType indexType, Path inputFilePath) {
-        format(indexType, inputFilePath.toFile(), false);
+    private static Document formatDocument(IndexType indexType, Path inputFilePath) {
+        return formatDocument(indexType, inputFilePath.toFile(), false);
+    }
+
+    /**
+     * format index; pass arguments as String. Validation by recasting.
+     *
+     * @param indexTypeString the index type, refer to {@link IndexType}.
+     * @param inputFile       the index file
+     * @param copyOriginal    whether to copy the original node
+     * @return
+     */
+    @SuppressWarnings("unused")
+    private static String format(String indexTypeString, String inputFile, boolean copyOriginal) {
+        var indexTypeEnum = IndexType.valueOf(indexTypeString);
+        var inputFilePath = Path.of(inputFile);
+        return format(indexTypeEnum, inputFilePath.toFile(), copyOriginal);
+    }
+
+    /**
+     * format index to XML
+     *
+     * @param indexType     the index type, refer to {@link IndexType}.
+     * @param inputFilePath the index file
+     * @return
+     */
+    @SuppressWarnings("unused")
+    private static String format(IndexType indexType, Path inputFilePath) {
+        return format(indexType, inputFilePath.toFile(), false);
     }
 
     /**
      * format index of specific entries to simple XML list with items
      *
-     * @param indexType the index type, refer to {@link IndexType}.
-     * @param inputFile the index file
-     * @param copyOriginal    whether to copy the original node
+     * @param indexType    the index type, refer to {@link IndexType}.
+     * @param inputFile    the index file
+     * @param copyOriginal whether to copy the original node
+     * @return
      */
-    private static void format(IndexType indexType, File inputFile, boolean copyOriginal) {
+    private static String format(IndexType indexType, File inputFile, boolean copyOriginal) {
+        Document document = formatDocument(indexType, inputFile, copyOriginal);
+        return XMLUtilities.documentToString(document, true, false);
+    }
+
+    /**
+     * format index of specific entries to simple XML list with items
+     *
+     * @param indexType    the index type, refer to {@link IndexType}.
+     * @param inputFile    the index file
+     * @param copyOriginal whether to copy the original node
+     * @return
+     */
+    private static Document formatDocument(IndexType indexType, File inputFile, boolean copyOriginal) {
         try (InputStream formatXQL = IndexFormatter.class.getClassLoader().getResourceAsStream("index-formatter.xql");
              InputStream indexStream = new FileInputStream(inputFile)) {
             String indexTypeString = indexType.toString();
             Processor proc = new Processor(false);
             XQueryCompiler comp = proc.newXQueryCompiler();
             XQueryExecutable xQueryEvaluator = comp.compile(formatXQL);
+
 
             DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
             docFactory.setNamespaceAware(true);
@@ -120,7 +169,7 @@ public class IndexFormatter implements Callable<Integer> {
             queryEvaluator.setExternalVariable(new QName("entries"), proc.newDocumentBuilder().wrap(indexSource));
             queryEvaluator.run(new DOMDestination(document));
 
-            System.out.println(XMLUtilities.documentToString(document, true, false));
+            return document;
 
 
         } catch (IOException | SaxonApiException | ParserConfigurationException e) {
