@@ -67,6 +67,7 @@ public class IndexFormatter implements Callable<Integer> {
         try {
             OutputStream outPut = (outFile == null) ? System.out : new FileOutputStream(outFile.toFile());
             outPut.write(format(indexTypeEnum, inputFile.toFile(), copyOriginal).getBytes());
+            if (outFile != null) outPut.close(); // just to be correct
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
