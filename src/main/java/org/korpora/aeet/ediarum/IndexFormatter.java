@@ -54,7 +54,7 @@ public class IndexFormatter implements Callable<Integer> {
     @Option(names = {"-C", "--copy-original"})
     private boolean copyOriginal;
 
-    @Option(names = {"-o", "--outfile"})
+    @Option(names = {"-o", "--outfile"}, description = "out file (default: stdout)")
     Path outFile;
 
     public static void main(String[] args) {
