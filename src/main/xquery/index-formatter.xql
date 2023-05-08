@@ -15,7 +15,10 @@ declare function aeet:copy-original($node) {
     else ()
 };
 
-(: strip unnecessary namespace nodes, see https://stackoverflow.com/questions/23002655/xquery-how-to-remove-unused-namespace-in-xml-node :)
+(:
+    strip unnecessary namespace nodes by rebuilding,
+    see https://stackoverflow.com/questions/23002655/xquery-how-to-remove-unused-namespace-in-xml-node
+:)
 declare function aeet:strip-unnecessary-namespaces($n as node()) as node() {
     if($n instance of element()) then (
         element { node-name($n) } {
@@ -29,18 +32,20 @@ declare function aeet:strip-unnecessary-namespaces($n as node()) as node() {
     )
 };
 
+(: remove empty strings from sequence :)
 declare function aeet:non-empty-strings($sequence){
     for $item in $sequence
     where $item != ""
     return $item
 };
 
+(: guess type of list based on contained list elements :)
 declare function aeet:determine-type($entries) {
     if ($entries//tei:body/tei:listPerson) then "persons"
     else if ($entries//tei:body/tei:listPlace) then "places"
-    else if ($entries//tei:body/tei:listPlace) then "organizations"
-    else if ($entries//tei:body/tei:list) then "items"
+    else if ($entries//tei:body/tei:listOrg) then "organizations"
     else if ($entries//tei:body/tei:listBibl) then "bibliography"
+    else if ($entries//tei:body/tei:list) then "items"
     else error((), "Could not guess index type")
 };
 
