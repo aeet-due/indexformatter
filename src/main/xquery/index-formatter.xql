@@ -82,7 +82,7 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
                             $effectiveForename),  ', '))
                     else (normalize-space(string-join($x/tei:persName[@type='reg'][1]/tei:name[1]))),
                     $orderName :=replace($name, "v(\.|[ao][mn])(\sd(e[rmn]|\.))?\s+|d[ue](l(l[oa])?)?('|\s)+", ""),
-                    $lifedate := if ($x/tei:floruit)
+                    $lifeDate := if ($x/tei:floruit)
                         then (concat(' (', $x/tei:floruit, ')
                         '))
                         else if ($x/tei:birth)
@@ -101,7 +101,7 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
                         element li {
                             attribute xml:id { $x/@xml:id},
                             element span {
-                                concat($name, $lifedate, $note)
+                                concat($name, $lifeDate, $note)
                             },
                             aeet:copy-original($x)
                         }
