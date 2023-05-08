@@ -17,6 +17,7 @@ import java.util.concurrent.Callable;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 
@@ -46,11 +47,14 @@ public class IndexFormatter implements Callable<Integer> {
     @Parameters(index = "0", description = "input file")
     private Path inputFile;
 
+
     @SuppressWarnings("unused")
     @Parameters(index = "1", paramLabel = "Type", description = "Index Type,"
             + " one of: ${COMPLETION-CANDIDATES} [default: ${DEFAULT-VALUE}]", defaultValue = "guess")
-
     private IndexType indexTypeEnum;
+
+    @Option(names = {"-C", "--copy-original"})
+    private boolean copyOriginal;
 
     public static void main(String[] args) {
         int exitCode = new CommandLine(new IndexFormatter())
@@ -59,8 +63,8 @@ public class IndexFormatter implements Callable<Integer> {
     }
 
     public Integer call() {
-        System.out.format("Going to format '%s' [type '%s']\n", inputFile, indexTypeEnum.toString());
-        format(indexTypeEnum, inputFile.toFile());
+        System.err.format("Going to format '%s' [type '%s']\n", inputFile, indexTypeEnum.toString());
+        format(indexTypeEnum, inputFile.toFile(), copyOriginal);
         return 0;
     }
 
@@ -69,12 +73,13 @@ public class IndexFormatter implements Callable<Integer> {
      *
      * @param indexTypeString the index type, refer to {@link IndexType}.
      * @param inputFile       the index file
+     * @param copyOriginal    whether to copy the original node
      */
     @SuppressWarnings("unused")
-    private static void format(String indexTypeString, String inputFile) {
+    private static void format(String indexTypeString, String inputFile, boolean copyOriginal) {
         var indexTypeEnum = IndexType.valueOf(indexTypeString);
         var inputFilePath = Path.of(inputFile);
-        format(indexTypeEnum, inputFilePath.toFile());
+        format(indexTypeEnum, inputFilePath.toFile(), copyOriginal);
     }
 
     /**
@@ -85,7 +90,7 @@ public class IndexFormatter implements Callable<Integer> {
      */
     @SuppressWarnings("unused")
     private static void format(IndexType indexType, Path inputFilePath) {
-        format(indexType, inputFilePath.toFile());
+        format(indexType, inputFilePath.toFile(), false);
     }
 
     /**
@@ -93,8 +98,9 @@ public class IndexFormatter implements Callable<Integer> {
      *
      * @param indexType the index type, refer to {@link IndexType}.
      * @param inputFile the index file
+     * @param copyOriginal    whether to copy the original node
      */
-    private static void format(IndexType indexType, File inputFile) {
+    private static void format(IndexType indexType, File inputFile, boolean copyOriginal) {
         try (InputStream formatXQL = IndexFormatter.class.getClassLoader().getResourceAsStream("index-formatter.xql");
              InputStream indexStream = new FileInputStream(inputFile)) {
             String indexTypeString = indexType.toString();
@@ -108,7 +114,9 @@ public class IndexFormatter implements Callable<Integer> {
 
             SAXSource indexSource = new SAXSource(new InputSource(indexStream));
             XQueryEvaluator queryEvaluator = xQueryEvaluator.load();
-            queryEvaluator.setExternalVariable(new QName("ediarum-index-id-override"), new XdmAtomicValue(indexTypeString));
+            queryEvaluator.setExternalVariable(new QName("ediarum-index-id-override"),
+                    new XdmAtomicValue(indexTypeString));
+            queryEvaluator.setExternalVariable(new QName("copy-original"), new XdmAtomicValue(copyOriginal));
             queryEvaluator.setExternalVariable(new QName("entries"), proc.newDocumentBuilder().wrap(indexSource));
             queryEvaluator.run(new DOMDestination(document));
 

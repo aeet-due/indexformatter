@@ -3,13 +3,16 @@ declare namespace aeet = "http://aeet.korpora.org";
 declare namespace tei = "http://www.tei-c.org/ns/1.0";
 declare namespace telota = "http://www.telota.de";
 declare variable $entries external;
+declare variable $copy-original as xs:boolean external;
 declare variable $ediarum-index-id-override external;
 
 (: copy element and wrap in <original> :)
 declare function aeet:copy-original($node) {
-    aeet:strip-unnecessary-namespaces(<tei:original>
-        {copy-of($node)}
-    </tei:original>)
+    if ($copy-original) then
+        aeet:strip-unnecessary-namespaces(<tei:original>
+            {copy-of($node)}
+        </tei:original>)
+    else ()
 };
 
 (: strip unnecessary namespace nodes, see https://stackoverflow.com/questions/23002655/xquery-how-to-remove-unused-namespace-in-xml-node :)
@@ -24,6 +27,12 @@ declare function aeet:strip-unnecessary-namespaces($n as node()) as node() {
     ) else (
         $n
     )
+};
+
+declare function aeet:non-empty-strings($sequence){
+    for $item in $sequence
+    where $item != ""
+    return $item
 };
 
 declare function aeet:determine-type($entries) {
@@ -43,9 +52,10 @@ declare function aeet:format-surname($name){
 };
 
 declare function aeet:parenthesize($sequence){
-    if (not(empty($sequence))) then
-        ("(" || string-join($sequence, ",") || ")")
-    else ()
+    let $effective-sequence := aeet:non-empty-strings($sequence)
+    return if (not(empty($effective-sequence))) then
+        ("(" || string-join($effective-sequence, ", ") || ")")
+        else ()
 };
 
 (: from Ediarum's config.xqm, slightly tweaked :)
@@ -121,7 +131,7 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
                     if ($place/tei:note and $show-details='note')
                     then normalize-space($place/tei:note[1])
                     else (),
-                    $additionalInfo := normalize-space(string-join(($place/tei:region[@type="county"], $place/tei:region[@type="state"], $place/tei:country), ", "))
+                    $additionalInfo := (string-join(aeet:non-empty-strings(($place/tei:region[@type="county"], $place/tei:region[@type="state"], $place/tei:country)), ", "))
 
                 order by if ($order) then $name[1] else ()
                 return
