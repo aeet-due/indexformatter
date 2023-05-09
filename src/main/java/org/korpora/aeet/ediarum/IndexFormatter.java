@@ -63,7 +63,7 @@ public class IndexFormatter implements Callable<Integer> {
     }
 
     public Integer call() {
-        System.err.format("Going to format '%s' [type '%s']\n", inputFile, indexTypeEnum.toString());
+        System.err.format("Formatting '%s' [type '%s']\n", inputFile, indexTypeEnum.toString());
         try {
             OutputStream outPut = (outFile == null) ? System.out : new FileOutputStream(outFile.toFile());
             outPut.write(format(indexTypeEnum, inputFile.toFile(), copyOriginal).getBytes());

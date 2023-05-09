@@ -71,8 +71,7 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
             element ul {
                 for $x in $entries//tei:person
                 let $name :=
-                    if ($x/tei:persName[@type='reg'][1])
-                    then
+                    if ($x/tei:persName[@type='reg'][1] and ($x/tei:persName[@type='reg'][1]/tei:forename != '' or $x/tei:persName[@type='reg'][1]/tei:surname != '')) then
                         let $surname := aeet:format-surname($x/tei:persName[@type='reg'][1]),
                             $forename := normalize-space(string-join($x/tei:persName[@type='reg'][1]/tei:forename, " ")),
                             $effectiveForename := if ($forename = '' ) then  "(OHNE VORNAME)" else $forename,
@@ -80,7 +79,7 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
                         return normalize-space(string-join((
                             $effectiveSurname,
                             $effectiveForename),  ', '))
-                    else (normalize-space(string-join($x/tei:persName[@type='reg'][1]/tei:name[1]))),
+                    else (normalize-space($x//(tei:name|tei:persName[@type="nickname"]|tei:persName[@type="occursAs"])[1])),
                     $orderName :=replace($name, "v(\.|[ao][mn])(\sd(e[rmn]|\.))?\s+|d[ue](l(l[oa])?)?('|\s)+", ""),
                     $lifeDate := if ($x/tei:floruit)
                         then (concat(' (', $x/tei:floruit, ')
@@ -89,10 +88,10 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
                             then (concat(' (', $x/tei:birth[1], '–', $x/tei:death[1], ')'))
                             else (),
                         $note := (
-                            if ($x/tei:name[@type='alias']) then concat("[auch: ", string-join($x/name[@type='alias']) , "]") else (),
-                            if ($x/tei:name[@type='occursAs']) then concat("[oder: ", string-join($x/name[@type='occursAs']) , "]") else (),
+                            if ($x/tei:persName[@type='nickname']) then concat(" [auch: ", string-join($x/tei:persName[@type='nickname']) , "]") else (),
+                            if ($x/tei:persName[@type='occursAs']) then concat(" [oder: ", string-join($x/tei:persName[@type='occursAs']) , "]") else (),
                             if ($x/tei:note//text() and $show-details='note')
-                                then (concat(' (', normalize-space(string-join($x/tei:note)), ')'))
+                                then (' (' || normalize-space(string-join($x/tei:note)) || ')')
                                 else ()
                         )
                 order by if ($order) then $orderName else ()
@@ -101,7 +100,7 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
                         element li {
                             attribute xml:id { $x/@xml:id},
                             element span {
-                                concat($name, $lifeDate, $note)
+                                $name || $lifeDate || $note
                             },
                             aeet:copy-original($x)
                         }
