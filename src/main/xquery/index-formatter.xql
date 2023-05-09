@@ -88,11 +88,14 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
                             then (concat(' (', $x/tei:birth[1], '–', $x/tei:death[1], ')'))
                             else (),
                         $note := (
-                            if ($x/tei:persName[@type='nickname']) then concat(" [auch: ", string-join($x/tei:persName[@type='nickname']) , "]") else (),
-                            if ($x/tei:persName[@type='occursAs']) then concat(" [oder: ", string-join($x/tei:persName[@type='occursAs']) , "]") else (),
-                            if ($x/tei:note//text() and $show-details='note')
-                                then (' (' || normalize-space(string-join($x/tei:note)) || ')')
-                                else ()
+                            let $nickname := $x/tei:persName[@type='nickname'][. != $name],
+                                $occursAs := $x/tei:persName[@type='occursAs'][. != $name],
+                                $effectiveOccurence := if ($occursAs != '') then concat(" [oder: ", string-join($x/tei:persName[@type='occursAs']) , "]") else (),
+                                $effectiveNickname := if ($nickname != '') then concat(" [auch: ", string-join($x/tei:persName[@type='nickname']) , "]") else (),
+                                $effectiveNote := if ($x/tei:note//text() and $show-details='note')
+                                    then (' (' || normalize-space(string-join($x/tei:note)) || ')')
+                                    else ()
+                            return ($effectiveOccurence, $effectiveNickname, $effectiveNote)
                         )
                 order by if ($order) then $orderName else ()
                 return
