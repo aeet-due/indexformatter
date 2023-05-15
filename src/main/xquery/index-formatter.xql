@@ -112,7 +112,7 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
                             aeet:copy-original($x)
                         }
                     } catch * {
-                        error((), "Error in file: "||document-uri(root($x))||" in entry: "||serialize($x))
+                        error((), "Error in file: " || document-uri(root($x)) || " in entry: " || serialize($x))
                     }
             }
         return
