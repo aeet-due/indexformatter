@@ -87,15 +87,16 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
                         else if ($x/tei:birth)
                             then (concat(' (', $x/tei:birth[1], '–', $x/tei:death[1], ')'))
                             else (),
+                        $effectiveNickname :=
+                                let $nickname := $x/tei:persName[@type='nickname'][. != $name]
+                                return if ($nickname != '') then concat(" [auch: ", string-join($x/tei:persName[@type='nickname'],', ') , "]") else (),
                         $note := (
-                            let $nickname := $x/tei:persName[@type='nickname'][. != $name],
-                                $occursAs := $x/tei:persName[@type='occursAs'][. != $name],
-                                $effectiveOccurence := if ($occursAs != '') then concat(" [oder: ", string-join($x/tei:persName[@type='occursAs']) , "]") else (),
-                                $effectiveNickname := if ($nickname != '') then concat(" [auch: ", string-join($x/tei:persName[@type='nickname']) , "]") else (),
+                            let $occursAs := $x/tei:persName[@type='occursAs'][. != $name],
+                                $effectiveOccurrence := if ($occursAs != '') then concat(" [Erwähnungen: ", string-join($x/tei:persName[@type='occursAs'], ', ') , "]") else (),
                                 $effectiveNote := if ($x/tei:note//text() and $show-details='note')
-                                    then (' (' || normalize-space(string-join($x/tei:note)) || ')')
+                                    then (' (' || normalize-space(string-join($x/tei:note, "; ")) || ')')
                                     else ()
-                            return ($effectiveOccurence, $effectiveNickname, $effectiveNote)
+                            return ($effectiveNickname, $effectiveOccurrence, $effectiveNote)
                         )
                 order by if ($order) then $orderName else ()
                 return
@@ -104,6 +105,9 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
                             attribute xml:id { $x/@xml:id},
                             element span {
                                 $name || $lifeDate || $note
+                            },
+                            element normalized {
+                                $name || $lifeDate || $effectiveNickname
                             },
                             aeet:copy-original($x)
                         }
