@@ -1,3 +1,4 @@
+declare default collation "http://www.w3.org/2013/collation/UCA?lang=de;strength=primary";
 declare namespace aeet = "http://aeet.korpora.org";
 (: declare default element namespace "http://www.tei-c.org/ns/1.0"; :)
 declare namespace tei = "http://www.tei-c.org/ns/1.0";
@@ -56,10 +57,24 @@ declare function aeet:format-surname($name){
     ($surname, if ($birthSurname) then "geb. " || $birthSurname else ()), " "))
 };
 
+declare function aeet:format-place($place){
+    let $normal := $place/tei:placeName[@type="reg"][1],
+        $additional := $place/tei:placeName[@type = "reg"][position() > 2],
+        $alt := $place/tei:placeName[@type="alt"]
+    return string-join(($normal, aeet:bracket(string-join(($additional, $alt), ", "))), " ")
+};
+
 declare function aeet:parenthesize($sequence){
     let $effective-sequence := aeet:non-empty-strings($sequence)
     return if (not(empty($effective-sequence))) then
         ("(" || string-join($effective-sequence, ", ") || ")")
+        else ()
+};
+
+declare function aeet:bracket($sequence){
+    let $effective-sequence := aeet:non-empty-strings($sequence)
+    return if (not(empty($effective-sequence))) then
+        ("[auch: " || string-join($effective-sequence, ", ") || "]")
         else ()
 };
 
@@ -122,22 +137,11 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
         let $ul :=
             element ul {
                 for $place in $entries//tei:place
-                let $name :=
-                    if ($place[ancestor::tei:place])
-                    then (normalize-space(string-join($place/ancestor::tei:place/tei:placeName[@type='reg'][1]/text()))||' - '||normalize-space(string-join($place/tei:placeName[@type='reg'][1])))
-                    else (normalize-space(string-join($place/tei:placeName[@type='reg'][1]))),
-                    $altname :=
-                    if ($place/tei:placeName[@type='alt'] and $show-details='altname')
-                    then (' [' ||
-                        string-join(
-                            for $altname at $pos in $place/tei:placeName[@type='alt']
-                            return
-                            if ($pos=1)
-                            then (normalize-space(string-join($altname)))
-                            else (', ' || normalize-space(string-join($altname)))
-                        )
-                    ||']')
-                    else (),
+                let $rawName := aeet:format-place($place),
+                    $name :=
+                    if ($place[ancestor::tei:place]) then
+                        aeet:format-place($place/ancestor::tei:place) ||' - '|| $rawName
+                    else $rawName,
                     $note :=
                     if ($place/tei:note and $show-details='note')
                     then normalize-space($place/tei:note[1])
@@ -150,7 +154,7 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
                         element li {
                             attribute xml:id { $place/@xml:id},
                             element span {
-                                string-join(($name, $altname, aeet:parenthesize(($note, $additionalInfo))), " ")
+                                string-join(($name, aeet:parenthesize(($note, $additionalInfo))), " ")
                             },
                             aeet:copy-original($place)
                         }
