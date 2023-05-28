@@ -57,10 +57,10 @@ declare function aeet:format-surname($name){
     ($surname, if ($birthSurname) then "geb. " || $birthSurname else ()), " "))
 };
 
-declare function aeet:format-place($place){
+declare function aeet:format-place($place, $show-details){
     let $normal := $place/tei:placeName[@type="reg"][1],
         $additional := $place/tei:placeName[@type = "reg"][position() > 2],
-        $alt := $place/tei:placeName[@type="alt"]
+        $alt := if ($show-details = "altname ") then $place/tei:placeName[@type="alt"] else ()
     return string-join(($normal, aeet:bracket(string-join(($additional, $alt), ", "))), " ")
 };
 
@@ -137,10 +137,10 @@ declare function aeet:get-ediarum-index-without-params($entries, $ediarum-index-
         let $ul :=
             element ul {
                 for $place in $entries//tei:place
-                let $rawName := aeet:format-place($place),
+                let $rawName := aeet:format-place($place, $show-details),
                     $name :=
                     if ($place[ancestor::tei:place]) then
-                        aeet:format-place($place/ancestor::tei:place) ||' - '|| $rawName
+                        aeet:format-place($place/ancestor::tei:place, $show-details) ||' - '|| $rawName
                     else $rawName,
                     $note :=
                     if ($place/tei:note and $show-details='note')
